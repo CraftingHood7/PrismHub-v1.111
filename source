@@ -1,0 +1,148 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "🔮Prism Hub 🔮- Hub to make your Roblox better",
+   Icon = 0, 
+   LoadingTitle = "🔮Prism Hub🔮",
+   LoadingSubtitle = "by Always_Frosty27",
+   Theme = "Default",
+   ToggleUIKeybind = "K", 
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = true,
+   KeySettings = {
+      Title = "🔮Prism Hub🔮 | Key System",
+      Subtitle = "Copy link into your browser",
+      Note = "https://link-center.net/2548082/CpmNzYla9NP1",
+      FileName = "Key",
+      SaveKey = true,
+      GrabKeyFromSite = true,
+      Key = {"https://pastebin.com/raw/y5H4tpKX"} 
+   }
+})
+
+local MainTab = Window:CreateTab("🤭Player", nil) 
+local PlayerSection = MainTab:CreateSection("Main")
+
+-- [ LOGIC VARIABLES ] --
+local InfiniteJumpEnabled = false
+local JumpConnection
+local InfJumpButton
+
+-- [ INFINITE JUMP ] --
+InfJumpButton = MainTab:CreateButton({
+   Name = "Infinite Jump: Toggle On",
+   Callback = function()
+       InfiniteJumpEnabled = not InfiniteJumpEnabled
+       if InfiniteJumpEnabled then
+           InfJumpButton:Set("Infinite Jump: Toggle Off")
+           JumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+               local p = game.Players.LocalPlayer
+               local c = p.Character
+               if c and c:FindFirstChildOfClass("Humanoid") then
+                   c:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+               end
+           end)
+           Rayfield:Notify({Title = "Infinite Jump", Content = "Status: ENABLED", Duration = 2, Image = nil})
+       else
+           InfJumpButton:Set("Infinite Jump: Toggle On")
+           if JumpConnection then JumpConnection:Disconnect() JumpConnection = nil end
+           Rayfield:Notify({Title = "Infinite Jump", Content = "Status: DISABLED", Duration = 2, Image = nil})
+       end
+   end,
+})
+
+-- [ WALKSPEED ] --
+MainTab:CreateSlider({
+   Name = "WalkSpeed (1-200)",
+   Range = {0, 200},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "WalkSpeed",
+   Callback = function(Value)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end
+   end,
+})
+
+-- [ JUMP POWER WITH 150 CAP ] --
+MainTab:CreateInput({
+   Name = "Jump Power",
+   CurrentValue = "50",
+   PlaceholderText = "Max 150",
+   RemoveTextAfterFocusLost = true,
+   Flag = "JumpPower",
+   Callback = function(Text)
+        local num = tonumber(Text)
+        if num then
+            -- This is the cap logic
+            if num > 150 then
+                num = 150
+                Rayfield:Notify({
+                    Title = "Value Capped",
+                    Content = "Jump Power limited to 150 for safety.",
+                    Duration = 2,
+                    Image = nil
+                })
+            end
+
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChildOfClass("Humanoid") then
+                char:FindFirstChildOfClass("Humanoid").UseJumpPower = true
+                char:FindFirstChildOfClass("Humanoid").JumpPower = num
+            end
+        end
+   end,
+})
+
+-- [ TELEPORT TAB ] --
+local TelTab = Window:CreateTab("🚀Teleport", nil)
+local Section = TelTab:CreateSection("Teleport")
+
+local function getPosString()
+    local lp = game.Players.LocalPlayer
+    if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+        local pos = lp.Character.HumanoidRootPart.Position
+        return string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z)
+    end
+    return "0, 0, 0"
+end
+
+local TeleportInput = TelTab:CreateInput({
+   Name = "TP to Coordinates (X, Y, Z)",
+   CurrentValue = getPosString(),
+   PlaceholderText = "Example: 100, 50, -200",
+   RemoveTextAfterFocusLost = true,
+   Flag = "teleport",
+   Callback = function(Text)
+       local coords = {}
+       for word in string.gmatch(Text, "[^,]+") do
+           table.insert(coords, tonumber(word))
+       end
+
+       if #coords >= 3 then
+           local tp_pos = Vector3.new(coords[1], coords[2], coords[3])
+           local lp = game.Players.LocalPlayer
+           if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+               lp.Character.HumanoidRootPart.CFrame = CFrame.new(tp_pos)
+           end
+       end
+   end,
+})
+
+local CopyButton = TelTab:CreateButton({
+   Name = "Copy current location (x,y,z)",
+   Callback = function()
+       local currentPos = getPosString()
+       setclipboard(currentPos)
+       Rayfield:Notify({
+           Title = "Location Copied!",
+           Content = "Coordinates: " .. currentPos,
+           Duration = 3,
+           Image = nil
+       })
+   end,
+})
+
+-- nil
